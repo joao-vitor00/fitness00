@@ -12,10 +12,9 @@ import org.springframework.stereotype.Repository;
 import com.jvsc.fit.Dao.ActivitiesDao;
 import com.jvsc.fit.Dao.Connect;
 import com.jvsc.fit.Entity.Activity;
-import com.jvsc.fit.Entity.User;
 
 @Repository
-public class ActivityJdbc implements ActivitiesDao{
+public class ActivityJdbc implements ActivitiesDao {
 
 	@Override
 	public void addActivity(Activity activity) throws SQLException {
