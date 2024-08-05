@@ -15,8 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jvsc.Request.user.AddUserDto;
+import com.jvsc.Request.user.DeleteUserDto;
+import com.jvsc.Request.user.UpdateUserDto;
+import com.jvsc.Response.Dto.UserDto;
 import com.jvsc.Service.UserService;
-import com.jvsc.fit.Entity.User;
+
 
 @RestController
 @RequestMapping("/users")
@@ -25,34 +29,35 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping
-    public ResponseEntity<Void> addUser(@RequestBody User user) {
+    @PostMapping("/new-user")
+    public ResponseEntity<?> addUser(@RequestBody AddUserDto user) {
         userService.addUser(user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping("/find/{id}")
-    public ResponseEntity<User> findUser(@PathVariable long id) {
-        User user = userService.findUser(id);
-        return user != null ? new ResponseEntity<>(user, HttpStatus.OK)
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> findUser(@PathVariable String id) {
+        
+        UserDto user = userService.findUser(Long.parseLong(id));
+        
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable long id) {
-        userService.deleteUser(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteUser(@RequestBody DeleteUserDto user) {
+        userService.deleteUser(user);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/view")
-    public ResponseEntity<List<User>> listUsers() {
-        List<User> users = userService.listUsers();
+    public ResponseEntity<?> listUsers() {
+        List<UserDto> users = userService.listUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable long id, @RequestBody User user) {
-        User updatedUser = userService.updateUser(user, id);
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUser(@RequestBody UpdateUserDto user) {
+        var updatedUser = userService.updateUser(user);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 }

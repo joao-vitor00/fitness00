@@ -2,9 +2,11 @@ package com.jvsc.Response;
 
 import java.util.List;
 
+
 public class FitException extends RuntimeException {
     
     private List<ErroResponse> erros;
+
     private int status;
 
     public FitException(String message, int status) {
@@ -16,4 +18,13 @@ public class FitException extends RuntimeException {
         this.erros = errors;
         this.status = status;
     }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public List<ErroResponse> getErros() {
+        return erros;
+    }
+    
 }

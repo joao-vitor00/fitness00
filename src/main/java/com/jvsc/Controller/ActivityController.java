@@ -11,12 +11,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jvsc.Service.ActivityService;
-import com.jvsc.fit.Entity.Activity;
+import com.jvsc.Entity.Activity;
+import com.jvsc.Request.activity.AddActivityDto;
+import com.jvsc.Request.activity.DeleteActivityDto;
+import com.jvsc.Request.activity.UpdateActivityDto;
 
-@RestController("/activity")
+@RestController
+@RequestMapping("/activity")
 public class ActivityController {
     
     @Autowired
@@ -25,33 +30,33 @@ public class ActivityController {
     
 
 @PostMapping("/new-activity")
-    public ResponseEntity<Void> addActivity(@RequestBody Activity activity) {
+    public ResponseEntity<?> addActivity(@RequestBody AddActivityDto activity) {
         activityService.addActivity(activity);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping("/find/{id}")
-    public ResponseEntity<Activity> findActivity(@PathVariable long id) {
-        Activity activity = activityService.findActivity(id);
+    public ResponseEntity<?> findActivity(@PathVariable long id) {
+        var activity = activityService.findActivity(id);
         return activity != null ? new ResponseEntity<>(activity, HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteActivity(@PathVariable long id) {
-        activityService.deleteActivity(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteActivity(@RequestBody DeleteActivityDto activity) {
+        activityService.deleteActivity(activity);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/view")
-    public ResponseEntity<List<Activity>> listActivities() {
-        List<Activity> activities = activityService.listActivities();
+    public ResponseEntity<?> listActivities() {
+        var activities = activityService.listActivities();
         return new ResponseEntity<>(activities, HttpStatus.OK);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<Activity> updateActivity(@PathVariable long id, @RequestBody Activity activity) {
-        Activity updatedActivity = activityService.updateActivity(activity, id);
+    @PutMapping("/update")
+    public ResponseEntity<?> updateActivity(@RequestBody UpdateActivityDto activity) {
+        var updatedActivity = activityService.updateActivity(activity);
         return new ResponseEntity<>(updatedActivity, HttpStatus.OK);
     }
 }

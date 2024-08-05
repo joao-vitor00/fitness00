@@ -1,13 +1,16 @@
-package com.jvsc.fit.Entity;
+package com.jvsc.Entity;
 
 import java.sql.Date;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "activities")
 public class Activity {
 	
 	public Activity() {
@@ -17,11 +20,23 @@ public class Activity {
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
+	
+	@Column
 	private long userId;
+	
+	@Column
 	private String type;
+	
+	@Column
 	private int duration;
+	
+	@Column
 	private int calories;
+	
+	@Column
 	private Date date;
+	
+	@Column
 	private boolean completed;
 	
 	public long getId() {

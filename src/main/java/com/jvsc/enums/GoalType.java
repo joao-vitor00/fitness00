@@ -1,4 +1,4 @@
-package com.jvsc.fit.Entity;
+package com.jvsc.enums;
 
 public enum GoalType {
     DURACAO,
@@ -13,4 +13,6 @@ public enum GoalType {
     public void set(int type){
         this.type = type;
     }
+
+
 }

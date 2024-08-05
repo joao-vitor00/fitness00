@@ -1,11 +1,18 @@
-package com.jvsc.fit.Entity;
+package com.jvsc.Entity;
 
 import java.sql.Date;
 
+import com.jvsc.enums.GoalType;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "goals")
 public class Goal {
 	
 	public Goal() {
@@ -15,12 +22,31 @@ public class Goal {
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
+
+	@Column
 	private Long userId;
-    private GoalType goalType; // Ex: "calorias", "duracao"
-    private int goalValue;
-    private Date goalPeriod;
-    private boolean completed;
-	
+    
+	@Column
+	private GoalType goalType; 
+    
+	@Column
+	private int goalValue;
+    
+	@Column
+	private Date goalPeriod;
+    
+	@Column
+	private boolean completed;
+
+	@Column
+	private Date start;
+
+	public Date getStart() {
+		return start;
+	}
+	public void setStart(Date start) {
+		this.start = start;
+	}
 	public boolean isCompleted() {
 		return completed;
 	}
