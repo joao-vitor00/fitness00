@@ -1,10 +1,12 @@
 package com.jvsc.Dao.DaoImpl;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.time.LocalDate;
 
 import java.util.ArrayList;
@@ -28,15 +30,16 @@ public class GoalJdbc implements GoalsDao {
 
     @Override
     public Goal findGoal(long id) {
-        String sql = "SELECT * FROM goals WHERE id = ?";
+        String sql = "{call find_goal(?)}";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
                 if (rs.next()) {
                     return mapGoal(rs);
                 }
-            }
+            
         } catch (SQLException e) {
             throw new FitException("Erro interno ao procurar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
@@ -45,35 +48,37 @@ public class GoalJdbc implements GoalsDao {
 
     @Override
     public void addGoal(AddGoalDto goal) {
-        String sql = "INSERT INTO goals (userid, goaltype, goalvalue, goalperiod, start, completed) VALUES (?, ?, ?, ?, ?, false)";
+        String sql = "call add_goal(?, ?, ?, ?, ?)";
         try{
         var date = new Date(Utils.convertToDate(goal.getGoalPeriod()).getTime());
         
         
         var today = LocalDate.now();
-        try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = Connect.open();
+            CallableStatement ps = con.prepareCall(sql);
+            
             ps.setLong(1, goal.getUserId());
             ps.setString(2, goal.getGoalType().name());
             ps.setInt(3, goal.getGoalValue());
             ps.setDate(4, date);
             ps.setDate(5, new Date(today.getYear(), today.getMonth().getValue(), today.getDayOfMonth()));
             ps.execute();
-            } catch (SQLException e) {
-            throw new FitException("Erro interno ao adicionar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());
-         }
+            
         }catch (Exception e){
-        throw new FitException("Erro interno ao adicionar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            throw new FitException("Erro interno ao adicionar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
+        
     }
 
     @Override
     public List<Goal> listGoals() {
-        String sql = "SELECT * FROM goals";
+        String sql = "{call list_goals()}";
         List<Goal> goals = new ArrayList<>();
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             CallableStatement ps = con.prepareCall(sql);
+             ) {
+                 ps.execute();
+                 ResultSet rs = ps.getResultSet();
             while (rs.next()) {
                 goals.add(mapGoal(rs));
             }
@@ -84,11 +89,11 @@ public class GoalJdbc implements GoalsDao {
     }
 
     public Goal refresh(RefreshDto ref){
-        String sql = "UPDATE goals SET completed = true WHERE id = ?";
+        String sql = "call refreshgoal(?)";
         
         try (Connection con = Connect.open();
-            PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setLong(4, ref.getId());
+            CallableStatement ps = con.prepareCall(sql)) {
+            ps.setLong(1, ref.getId());
             ps.execute();
         } catch (SQLException e) {
             throw new FitException("Erro interno ao atualizar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -99,9 +104,9 @@ public class GoalJdbc implements GoalsDao {
 
     @Override
     public void deleteGoal(DeleteGoalDto goal) {
-        String sql = "DELETE FROM goals WHERE id = ?";
+        String sql = "call delete_goal(?)";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setLong(1, goal.getId());
             ps.execute();
         } catch (SQLException e) {
@@ -111,16 +116,16 @@ public class GoalJdbc implements GoalsDao {
 
     @Override
     public Goal updateGoal(UpdateGoalDto goal) {
-        String sql = "UPDATE goals SET  goaltype = ?, goalvalue = ?, goalperiod = ? WHERE id = ?";
+        String sql = "call update_goal(?, ?, ?, ?)";
         try{
         var date = new Date(Utils.convertToDate(goal.getGoalPeriod()).getTime());
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             
-            ps.setString(1, goal.getGoalType().name());
-            ps.setInt(2, goal.getGoalValue());
-            ps.setDate(3, date);
-            ps.setLong(4, goal.getId());
+            ps.setString(2, goal.getGoalType().name());
+            ps.setInt(3, goal.getGoalValue());
+            ps.setDate(4, date);
+            ps.setLong(1, goal.getId());
             ps.execute();
         } catch (SQLException e) {
             throw new FitException("Erro interno ao atualizar o objetivo", HttpStatus.INTERNAL_SERVER_ERROR.value());

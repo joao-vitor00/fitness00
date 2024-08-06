@@ -1,5 +1,6 @@
 package com.jvsc.Dao.DaoImpl;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -27,9 +28,9 @@ public class ActivityJdbc implements ActivitiesDao {
 
     @Override
     public void addActivity(AddActivityDto activity)  {
-        String sql = "INSERT INTO activities (userid, type, duration, calories, date, completed) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "call add_activity(?,?,?,?,?,?)";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setLong(1, activity.getUserId());
             ps.setString(2, activity.getType());
             ps.setInt(3, activity.getDuration());
@@ -42,7 +43,7 @@ public class ActivityJdbc implements ActivitiesDao {
                 throw new FitException("Erro ao adicionar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
             ps.setBoolean(6, activity.isCompleted());
-            ps.executeUpdate();
+            ps.execute();
         } catch (SQLException e) {
             
             throw new FitException("Erro ao adicionar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -51,11 +52,11 @@ public class ActivityJdbc implements ActivitiesDao {
 
     @Override
     public void deleteActivity(long id)  {
-        String sql = "DELETE FROM activities WHERE id = ? ";
+        String sql = "call delete_activity(?)";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setLong(1, id);
-            ps.executeUpdate();
+            ps.execute();
         } catch (SQLException e) {
             
             throw new FitException("Erro ao deletar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -64,15 +65,16 @@ public class ActivityJdbc implements ActivitiesDao {
 
     @Override
     public Activity findActivity(long id) {
-        String sql = "SELECT * FROM activities WHERE id = ?";
+        String sql = "{call find_activity(?)}";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
                 if (rs.next()) {
                     return mapActivity(rs);
                 }
-            }
+            
         } catch (SQLException e) {
             
             throw new FitException("Erro ao procurar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -82,11 +84,12 @@ public class ActivityJdbc implements ActivitiesDao {
 
     @Override
     public List<Activity> listActivities()  {
-        String sql = "SELECT * FROM activities";
+        String sql = "{call list_activities()}";
         List<Activity> act = new ArrayList<>();
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             CallableStatement ps = con.prepareCall(sql)) {
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
             while (rs.next()) {
                 act.add(mapActivity(rs));
             }
@@ -98,12 +101,13 @@ public class ActivityJdbc implements ActivitiesDao {
     }
 
     public List<Activity> listByUser(long id)  {
-        String sql = "SELECT * FROM activities where userId = ? and completed = true";
+        String sql = "{call list_by_user(?)}";
         List<Activity> act = new ArrayList<>();
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)){
+             CallableStatement ps = con.prepareCall(sql)){
              ps.setLong(1, id);
-             ResultSet rs = ps.executeQuery(); 
+             ps.execute(); 
+             ResultSet rs = ps.getResultSet();
             while (rs.next()) {
                 act.add(mapActivity(rs));
             }
@@ -116,9 +120,9 @@ public class ActivityJdbc implements ActivitiesDao {
 
     @Override
     public Activity updateActivity(UpdateActivityDto activity) { 
-        String sql = "UPDATE activities SET type = ?, duration = ?, calories = ?, date = ?, completed = ? WHERE id = ?";
+        String sql = "call update_activity(?,?,?,?,?,?)";
         try (Connection con = Connect.open();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             CallableStatement ps = con.prepareCall(sql)) {
             ps.setString(2, activity.getType());
             ps.setInt(3, activity.getDuration());
             ps.setInt(4, activity.getCalories());
@@ -126,14 +130,14 @@ public class ActivityJdbc implements ActivitiesDao {
                 ps.setDate(5, new Date(Utils.convertToDate(activity.getDate()).getTime()));
             } catch (ParseException e) {
                 
-                
+                e.printStackTrace();
                 throw new FitException("Erro ao atualizar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
             }
             ps.setBoolean(6, activity.isCompleted());
             ps.setLong(1, activity.getId());
-            ps.executeUpdate();
+            ps.execute();
         } catch (SQLException e) {
-            
+            e.printStackTrace();
             throw new FitException("Erro ao atualizar a atividade", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
         return findActivity(activity.getId());

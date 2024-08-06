@@ -1,5 +1,6 @@
 package com.jvsc.Dao.DaoImpl;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -27,7 +28,7 @@ public class UserJdbc implements UserDao {
     
     @Override
     public void addUser(AddUserDto user) {
-        String sql = "INSERT INTO users (name, email, password, birthdate) VALUES (?, ?, ?, ?)";
+        String sql = "call add_user(?, ?, ?, ?)";
         try {
             var date = new Date(Utils.convertToDate(user.getBirthDate()).getTime());
             try (Connection con = Connect.open();
@@ -49,12 +50,13 @@ public class UserJdbc implements UserDao {
 
     @Override
     public Usuario findUser(long id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "{call find_user(?)}";
         try  {
             Connection con = Connect.open();
-            PreparedStatement cs = con.prepareStatement(sql);
+            CallableStatement cs = con.prepareCall(sql);
             cs.setLong(1, id);
-            ResultSet rs = cs.executeQuery();
+            cs.execute();
+            ResultSet rs = cs.getResultSet();
             if (rs.next()) {
                 return mapUser(rs);
             }
@@ -66,12 +68,12 @@ public class UserJdbc implements UserDao {
     }
 
     public Usuario findName(String name) {
-        String sql = "SELECT * FROM users WHERE name = ?";
-        try  {
-            Connection con = Connect.open();
-            PreparedStatement cs = con.prepareStatement(sql);
+        String sql = "{call find_user_by_name(?)}";
+        try (Connection con = Connect.open();
+        CallableStatement cs = con.prepareCall(sql)) {
             cs.setString(1, name);
-            ResultSet rs = cs.executeQuery();
+            cs.execute();
+            ResultSet rs = cs.getResultSet();
             if (rs.next()) {
                 return mapUser(rs);
             }
@@ -83,11 +85,12 @@ public class UserJdbc implements UserDao {
     }
 
     public Usuario findEmail(String email) {
-        String sql = "SELECT * FROM users WHERE email = ?";
+        String sql = "{call find_user_by_email(?)}";
         try (Connection con = Connect.open();
-             PreparedStatement cs = con.prepareStatement(sql)) {
+        CallableStatement cs = con.prepareCall(sql)) {
             cs.setString(1, email);
-            ResultSet rs = cs.executeQuery();
+            cs.execute();
+            ResultSet rs = cs.getResultSet();
             if (rs.next()) {
                 return mapUser(rs);
             }
@@ -100,12 +103,12 @@ public class UserJdbc implements UserDao {
 
     @Override
     public void deleteUser(DeleteUserDto user) {
-        String sql = "delete from users where id = ? ";
+        String sql = "call delete_user(?)";
         try (Connection con = Connect.open();
-             PreparedStatement cs = con.prepareStatement(sql)) {
+             CallableStatement cs = con.prepareCall(sql)){
             cs.setLong(1, user.getId());
             
-            cs.executeUpdate();
+            cs.execute();
         } catch (SQLException e) {
             
             throw new FitException("Erro interno ao deletar o usuário", HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -114,11 +117,12 @@ public class UserJdbc implements UserDao {
 
     @Override
     public List<UserDto> listUsers() {
-        String sql = "SELECT * FROM users";
+        String sql = "{call list_users()}";
         List<UserDto> users = new ArrayList<>();
         try (Connection con = Connect.open();
-             PreparedStatement cs = con.prepareStatement(sql)) {
-            ResultSet rs = cs.executeQuery();
+             CallableStatement cs = con.prepareCall(sql)) {
+            cs.execute();
+            ResultSet rs = cs.getResultSet();
             
                 
                     while (rs.next()) {
@@ -135,7 +139,7 @@ public class UserJdbc implements UserDao {
 
     @Override
     public Usuario updateUser(UpdateUserDto user) {
-        String sql = "UPDATE users SET name = ?, email = ?, password = ?, birthdate = ? WHERE id = ? ";
+        String sql = "call update_user(?, ?, ?, ?, ?) ";
         Date date;
         try {
             date = new Date(Utils.convertToDate(user.getBirthDate()).getTime());
@@ -145,13 +149,13 @@ public class UserJdbc implements UserDao {
         }
         try (Connection con = Connect.open();
              PreparedStatement cs = con.prepareStatement(sql)) {
-            cs.setLong(4, user.getId());
-            cs.setString(1, user.getName());
-            cs.setString(2, user.getEmail());
-            cs.setString(3, user.getNewPassword());
+            cs.setLong(1, user.getId());
+            cs.setString(2, user.getName());
+            cs.setString(3, user.getEmail());
+            cs.setString(4, user.getNewPassword());
             
-            cs.setDate(4, date);
-            cs.executeUpdate();
+            cs.setDate(5, date);
+            cs.execute();
         } catch (SQLException e) {
             
             throw new FitException("Erro interno ao atualizar o usuário", HttpStatus.INTERNAL_SERVER_ERROR.value());
